@@ -91,3 +91,8 @@ No npm, no build step. Both dependencies are loaded via CDN.
 - [CryptoJS](https://github.com/brix/crypto-js) by Jeff Mott for the cryptographic library
 - Matrix rain animation inspired by the iconic *The Matrix* digital rain effect
 - Font: [Inconsolata](https://fonts.google.com/specimen/Inconsolata) via Google Fonts
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
