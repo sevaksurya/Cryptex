@@ -5,7 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Encryption and Decryption</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;400;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Custom Hacker Scrollbar Styling */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #00ff00 #0d1117;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+            border-left: 1px solid rgba(0, 255, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #33ff33;
+            box-shadow: 0 0 12px #00ff00;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: #0d1117;
+        }
 
         body {
             font-family: 'Inconsolata', monospace;
@@ -14,7 +50,9 @@
             margin: 0;
             padding: 0;
             overflow: auto;
+            min-height: 100vh;
         }
+
         .hacker-grid {
             position: fixed;
             top: 0;
@@ -39,13 +77,14 @@
             pointer-events: none;
         }
 
-            .matrix-rain canvas {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-            }
+        .matrix-rain canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
         .container {
             background-color: #0d1117;
@@ -53,48 +92,75 @@
             box-shadow: 0 0 10px #0f0;
             border: 2px solid #0f0;
             border-radius: 10px;
-            max-width: 600px;
-            width: 100%;
+            max-width: 680px;
+            width: calc(100% - 24px);
             text-align: center;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            overflow: auto; /* Added */
-            max-height: 80vh; /* Added */
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: 88vh;
+        }
+
+        /* Top-right SFX Toggle Button */
+        .top-bar-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 2px;
+        }
+
+        .sfx-toggle-btn {
+            width: auto;
+            height: 28px;
+            margin: 0;
+            padding: 3px 10px;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(0, 255, 0, 0.6);
+            background-color: #050d05;
+            color: #00ff00;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .sfx-toggle-btn.active {
+            background-color: #00ff00;
+            color: #000;
+            box-shadow: 0 0 8px #00ff00;
         }
 
         h1 {
             font-size: 36px;
-            margin-bottom: 20px;
+            margin-top: 4px;
+            margin-bottom: 12px;
             color: #0f0;
             text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 40px #0f0;
             animation: flicker 1.5s infinite alternate;
         }
 
-        /* Additional styles remain unchanged */
         @keyframes flicker {
             0% {
                 opacity: 1;
             }
-
             50% {
                 opacity: 0.8;
             }
-
             100% {
                 opacity: 1;
             }
         }
 
         p {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #c9d1d9;
         }
 
         textarea,
-        input[type="text"] {
+        input[type="text"],
+        input[type="password"] {
             width: calc(100% - 20px);
             margin: 10px 0;
             padding: 10px;
@@ -105,53 +171,58 @@
             box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
             outline: none;
             font-size: 16px;
+            font-family: 'Inconsolata', monospace;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-            textarea:focus,
-            input[type="text"]:focus {
-                border-color: #00ff00;
-                box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-            }
+        textarea:focus,
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
 
         button {
             width: calc(100% - 20px);
-            margin: 10px 0;
+            margin: 8px 0;
             padding: 10px;
             border: 1px solid #00ff00;
             border-radius: 4px;
             cursor: pointer;
             background-color: #000;
             color: #00ff00;
-            transition: background-color 1.5s, color 1.5s;
+            transition: background-color 1.5s, color 1.5s, box-shadow 0.3s;
             font-size: 16px;
             position: relative;
             overflow: hidden;
             z-index: 1;
+            font-family: Courier New, Courier, monospace;
+            font-weight: bold;
         }
 
-            button:hover {
-                background-color: #00ff00;
-                color: #000;
-            }
+        button:hover {
+            background-color: #00ff00;
+            color: #000;
+        }
 
-            button:before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 255, 0, 0.2);
-                transition: left 1.5s;
-                z-index: -1;
-            }
+        button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 255, 0, 0.2);
+            transition: left 1.5s;
+            z-index: -1;
+        }
 
-            button:hover:before {
-                left: 0;
-            }
+        button:hover:before {
+            left: 0;
+        }
 
         .result {
-            margin-top: 20px;
+            margin-top: 15px;
             padding: 10px;
             border: 1px solid #00ff00;
             background-color: #1e1e1e;
@@ -163,66 +234,123 @@
             white-space: pre-wrap;
             max-height: 150px;
             overflow-y: auto;
+            cursor: pointer;
         }
 
         .glow-text {
             animation: glowing 1s linear infinite;
-            font-family:Garamond;
-            font-size:40px;
+            font-family: Garamond, serif;
+            font-size: 40px;
         }
 
         @keyframes glowing {
             0% {
                 text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00;
             }
-
             50% {
                 text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00, 0 0 20px #00ff00;
             }
-
             100% {
                 text-shadow: 0 0 10px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00;
             }
         }
 
+        /* ASCII Progress Bar Loading State */
         .loading-text {
             display: none;
             color: #00ff00;
-            margin-top: 10px;
-            animation: loading 2s linear infinite;
-        }
-
-        @keyframes loading {
-            0% {
-                content: 'Encrypting...';
-            }
-
-            50% {
-                content: 'Encrypting';
-            }
-
-            100% {
-                content: 'Encrypting...';
-            }
+            margin: 12px auto;
+            padding: 8px 10px;
+            width: calc(100% - 20px);
+            background-color: #051005;
+            border: 1px solid rgba(0, 255, 0, 0.6);
+            border-radius: 4px;
+            font-family: 'Inconsolata', Courier New, monospace;
+            font-weight: bold;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 6px #00ff00;
+            box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.25);
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .output-container {
             display: none;
+            position: relative;
+        }
+
+        /* Console Header Bar & Color-Coded Logs */
+        .console-wrapper {
+            margin-top: 12px;
+            width: calc(100% - 20px);
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid rgba(0, 255, 0, 0.45);
+            border-radius: 4px;
+            background-color: #14171c;
+            overflow: hidden;
+            position: relative;
+            z-index: 4;
+        }
+
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 10px;
+            background-color: #061506;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.35);
+            font-size: 12px;
+            color: #00ff00;
+        }
+
+        .clear-log-btn {
+            width: auto;
+            height: 22px;
+            margin: 0;
+            padding: 1px 8px;
+            font-size: 11px;
+            border: 1px solid rgba(0, 255, 0, 0.6);
+            background-color: #000;
+            color: #00ff00;
         }
 
         .console-output {
             color: #00ff00;
-            margin-top: 10px;
             text-align: left;
-            white-space: pre-line;
-            max-height: 150px;
+            max-height: 130px;
             overflow-y: auto;
-            padding: 10px;
+            padding: 8px 10px;
             background-color: #1e1e1e;
-            border-radius: 4px;
             box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 4;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+
+        .log-time {
+            color: #7ee787;
+            opacity: 0.85;
+        }
+
+        .log-info,
+        .log-ok {
+            color: #00ff00;
+        }
+
+        .log-warn {
+            color: #ffaa00;
+            text-shadow: 0 0 4px rgba(255, 170, 0, 0.4);
+        }
+
+        .log-err {
+            color: #ff4444;
+            text-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
         }
 
         .terminal {
@@ -234,27 +362,29 @@
             position: relative;
             max-height: 150px;
             overflow-y: auto;
+            width: calc(100% - 20px);
+            margin-left: auto;
+            margin-right: auto;
         }
 
-            .terminal:before {
-                content: '';
-                display: block;
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                pointer-events: none;
-                background: linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
-                background-size: 3px 3px;
-                animation: scanline 1s infinite linear;
-            }
+        .terminal:before {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
+            background-size: 3px 3px;
+            animation: scanline 1s infinite linear;
+        }
 
         @keyframes scanline {
             0% {
                 transform: translateY(0);
             }
-
             100% {
                 transform: translateY(-100%);
             }
@@ -272,134 +402,584 @@
             animation: scanline 2s infinite linear;
         }
 
-                textarea,
-        input[type="text"],
-        input[type="password"] {
-            width: calc(100% - 20px);
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #00ff00;
-            border-radius: 4px;
-            background-color: #1e1e1e;
-            color: #c9d1d9;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-            outline: none;
-            font-size: 16px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        textarea:focus,
-        input[type="text"]:focus,
-        input[type="password"]:focus {
-            border-color: #00ff00;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .typing-animation {
-            overflow: hidden;
-            white-space: nowrap;
-            margin: 0 auto;
-            border-right: 2px solid #00ff00; /* Cursor effect */
-            animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
-        }
-
-        @keyframes typing {
-            from {
-                width: 0;
-            }
-
-            to {
-                width: 100%;
-            }
-        }
-
-        @keyframes blink-caret {
-            from, to {
-                border-color: transparent;
-            }
-
-            50% {
-                border-color: #00ff00;
-            }
-        }
-
         #key {
-            width: 150px; /* Set the width of the input box */
-            text-align: center; /* Center align text */
-            margin: 10px auto; /* Center the input box */
-            font-size: 15px; /* Reduced font size for placeholder */
+            width: 200px;
+            max-width: calc(100% - 20px);
+            text-align: center;
+            margin: 10px auto;
+            font-size: 15px;
+            display: block;
         }
 
         .encrypt,
-        .decrypt {
-            width: 130px;
-            height:40px;
-            margin: 10px auto;
-            font-size: 17px; /* Reduce font size for buttons */
-            font-family:Courier New, Courier, monospace;
-            font-weight:bold;
+        .decrypt,
+        .action-btn {
+            width: 140px;
+            height: 40px;
+            margin: 6px 4px;
+            font-size: 16px;
+            font-family: Courier New, Courier, monospace;
+            font-weight: bold;
+            padding: 6px 10px;
         }
 
+        /* Mode Switcher Tabs */
+        .mode-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            width: 150px;
+            height: 38px;
+            margin: 0;
+            font-size: 15px;
+            padding: 6px 12px;
+        }
+
+        .mode-btn.active {
+            background-color: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        /* Status Banner (replaces browser alert) */
+        .status-banner {
+            display: none;
+            margin: 8px auto;
+            padding: 8px 12px;
+            width: calc(100% - 20px);
+            border: 1px solid #00ff00;
+            background-color: rgba(0, 255, 0, 0.12);
+            color: #00ff00;
+            border-radius: 4px;
+            font-size: 14px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        /* Bulk Mode Table Styles */
+        #bulkModeSection {
+            display: none;
+        }
+
+        .bulk-controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .bulk-controls-row button {
+            width: auto;
+            min-width: 120px;
+            flex: 1 1 auto;
+            max-width: 180px;
+            height: 38px;
+            margin: 0;
+            font-size: 14px;
+            padding: 6px 10px;
+        }
+
+        .paste-drawer {
+            display: none;
+            width: calc(100% - 20px);
+            margin: 8px auto;
+            padding: 10px;
+            border: 1px dashed #00ff00;
+            border-radius: 4px;
+            background-color: #11161d;
+            text-align: left;
+        }
+
+        .paste-drawer p {
+            margin: 0 0 6px 0;
+            font-size: 13px;
+            color: #00ff00;
+        }
+
+        .paste-drawer textarea {
+            width: 100%;
+            margin: 4px 0 8px 0;
+            min-height: 75px;
+            font-size: 14px;
+        }
+
+        /* Dedicated Sticky Scroll Wrapper for Bulk Table */
+        .bulk-table-scroll {
+            width: calc(100% - 20px);
+            margin: 10px auto;
+            max-height: 260px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            background-color: #1e1e1e;
+            box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.25);
+        }
+
+        .bulk-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            min-width: 340px;
+        }
+
+        .bulk-table th,
+        .bulk-table td {
+            border-bottom: 1px solid rgba(0, 255, 0, 0.35);
+            border-right: 1px solid rgba(0, 255, 0, 0.25);
+            padding: 6px;
+            vertical-align: middle;
+        }
+
+        .bulk-table th:last-child,
+        .bulk-table td:last-child {
+            border-right: none;
+        }
+
+        .bulk-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #051405;
+            color: #00ff00;
+            font-size: 14px;
+            z-index: 3;
+            box-shadow: 0 1px 0 #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .bulk-table input[type="text"] {
+            width: 100%;
+            margin: 0;
+            padding: 6px 8px;
+            font-size: 14px;
+            background-color: #121212;
+            border: 1px solid rgba(0, 255, 0, 0.5);
+        }
+
+        /* Row Status Badges */
+        .row-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            min-width: 44px;
+            font-family: Courier New, Courier, monospace;
+        }
+
+        .badge-ready {
+            color: #7ee787;
+            border: 1px solid rgba(0, 255, 0, 0.45);
+            background-color: rgba(0, 255, 0, 0.08);
+        }
+
+        .badge-enc,
+        .badge-dec {
+            color: #000;
+            background-color: #00ff00;
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 6px rgba(0, 255, 0, 0.8);
+        }
+
+        .badge-err {
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            background-color: rgba(255, 68, 68, 0.15);
+            box-shadow: 0 0 6px rgba(255, 68, 68, 0.5);
+        }
+
+        /* Per-Row Action Buttons (SVG Copy + Remove) */
+        .row-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .bulk-table .icon-row-btn,
+        .bulk-table .remove-row-btn {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+             display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .bulk-table .icon-row-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Single Mode Output Buttons Wrapper */
+        .copy-btn-wrapper {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .copy-single-btn {
+            display: inline-block;
+            width: auto;
+            min-width: 155px;
+            height: 36px;
+            margin: 4px 0;
+            padding: 5px 14px;
+            font-size: 14px;
+        }
+
+        /* Mobile Compatibility */
+        @media (max-width: 650px) {
+            .container {
+                width: 94%;
+                padding: 14px 10px;
+                max-height: 92vh;
+            }
+
+            .glow-text {
+                font-size: 26px;
+                margin-bottom: 10px;
+            }
+
+            p {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            textarea,
+            input[type="text"],
+            input[type="password"],
+            .terminal,
+            .console-wrapper,
+            .loading-text {
+                width: 100%;
+                font-size: 14px;
+            }
+
+            #key {
+                width: 100%;
+            }
+
+            .mode-switcher {
+                gap: 6px;
+            }
+
+            .mode-btn {
+                width: 48%;
+                font-size: 14px;
+            }
+
+            .encrypt,
+            .decrypt {
+                width: 47%;
+                margin: 6px 1%;
+                font-size: 15px;
+            }
+
+            .bulk-table-scroll,
+            .paste-drawer,
+            .status-banner {
+                width: 100%;
+            }
+
+            .bulk-controls-row button {
+                min-width: 46%;
+                max-width: 48%;
+                font-size: 13px;
+                padding: 6px 6px;
+            }
+
+            .copy-single-btn {
+                width: 48%;
+                min-width: 130px;
+                font-size: 13px;
+                padding: 5px 8px;
+            }
+
+            .terminal {
+                padding: 12px;
+            }
+        }
     </style>
     <!-- Include CryptoJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
 </head>
 <body>
-    <div class="matrix-rain"></div>
+    <div class="matrix-rain" id="matrixRainContainer"></div>
     <div class="hacker-grid"></div>
     <div class="animated-background"></div>
+
     <div class="container">
-        <!-- Content remains unchanged -->
+        <!-- Top-Right Optional Web Audio SFX Toggle -->
+        <div class="top-bar-controls">
+            <button type="button" id="sfxToggleBtn" class="sfx-toggle-btn" onclick="toggleSfx()">[SFX: OFF]</button>
+        </div>
+
         <h1 class="glow-text">Text Encryption and Decryption</h1>
         <p>Use this tool to securely encrypt and decrypt your text.</p>
-        <textarea id="inputText" placeholder="Enter text here..."></textarea>
+
+        <!-- Mode Switcher -->
+        <div class="mode-switcher">
+            <button type="button" id="singleModeBtn" class="mode-btn active" onclick="switchMode('single')">Single Mode</button>
+            <button type="button" id="bulkModeBtn" class="mode-btn" onclick="switchMode('bulk')">Bulk Mode</button>
+        </div>
+
+        <!-- Inline Status Notice -->
+        <div id="statusBanner" class="status-banner"></div>
+
+        <!-- Shared Single Encryption Key -->
         <input type="password" id="key" placeholder="Encryption key !">
-        <div></div>
-        <button class="encrypt" onclick="encryptText()">Encrypt</button> <!-- Padlock icon -->
-        <button class="decrypt" onclick="decryptText()">Decrypt</button> <!-- Unlocked padlock icon -->
+
+        <!-- SINGLE MODE SECTION -->
+        <div id="singleModeSection">
+            <textarea id="inputText" rows="3" placeholder="Enter text here..."></textarea>
+            <div>
+                <button type="button" class="encrypt" onclick="encryptText()">Encrypt</button>
+                <button type="button" class="decrypt" onclick="decryptText()">Decrypt</button>
+            </div>
+        </div>
+
+        <!-- BULK MODE SECTION -->
+        <div id="bulkModeSection">
+            <div class="bulk-controls-row">
+                <button type="button" onclick="addBulkRow('', '')">+ Add Row</button>
+                <button type="button" onclick="triggerBulkPaste()">Paste CSV / TXT</button>
+                <button type="button" onclick="bulkCopyHyphen()">Bulk Copy (-)</button>
+                <button type="button" onclick="resetBulkData()">Reset</button>
+            </div>
+
+            <!-- Paste Box for CSV (comma-separated) & TXT (hyphen-separated) -->
+            <div id="pasteDrawer" class="paste-drawer">
+                <p>Paste comma-separated (.csv) or '-' separated (.txt) lines below:</p>
+                <textarea id="bulkPasteInput" placeholder="Note 1, Secret Text 1&#10;Note 2 - Secret Text 2"></textarea>
+                <div class="bulk-controls-row">
+                    <button type="button" onclick="applyPastedData()">Load into Table</button>
+                    <button type="button" onclick="togglePasteDrawer(false)">Close</button>
+                </div>
+            </div>
+
+            <!-- Dedicated Scroll Wrapper with Sticky Table Headers -->
+            <div class="bulk-table-scroll">
+                <table class="bulk-table" id="bulkTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Note</th>
+                            <th style="width: 44%;">Text to be encrypted</th>
+                            <th style="width: 12%; text-align: center;">Status</th>
+                            <th style="width: 14%; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bulkTableBody">
+                        <!-- Dynamic rows inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bulk Encrypt / Decrypt Buttons -->
+            <div class="bulk-controls-row">
+                <button type="button" class="encrypt" onclick="bulkProcess('encrypt')">Bulk Encrypt</button>
+                <button type="button" class="decrypt" onclick="bulkProcess('decrypt')">Bulk Decrypt</button>
+            </div>
+
+            <!-- Bulk Download Options (.txt '-' separated and .csv) -->
+            <div class="bulk-controls-row">
+                <button type="button" onclick="downloadBulkFile('txt')">Download .TXT (-)</button>
+                <button type="button" onclick="downloadBulkFile('csv')">Download .CSV</button>
+            </div>
+        </div>
+
+        <!-- Animated ASCII Progress Bar with Label Inside -->
         <div class="loading-text" id="loadingText"></div>
-        <div class="output-container">
-            <div class="result terminal" id="outputText"></div>
-            <div class="console-output" id="consoleOutput"></div>
+
+        <div class="output-container" id="outputContainer">
+            <div id="singleOutputWrapper">
+                <div class="result terminal" id="outputText" title="Click to skip typing animation" onclick="skipTypingAnimation()"></div>
+                <div class="copy-btn-wrapper">
+                    <button type="button" class="copy-single-btn" onclick="copySingleOutput()">Copy to Clipboard</button>
+                    <button type="button" class="copy-single-btn" onclick="moveOutputToInput()">Move Output to Input ↑</button>
+                </div>
+            </div>
+
+            <!-- Timestamped & Color-Coded Console Log Box -->
+            <div class="console-wrapper">
+                <div class="console-header">
+                    <span>TERMINAL LOG</span>
+                    <button type="button" class="clear-log-btn" onclick="clearConsoleLog()">[Clear Log]</button>
+                </div>
+                <div class="console-output" id="consoleOutput"></div>
+            </div>
             <div class="scanline"></div>
         </div>
     </div>
 
     <script>
-        // Matrix rain effect
+        // State variables
+        let currentSingleResult = '';
+        let typingInterval = null;
+        let activeTypingElement = null;
+        let activeTypingFullText = '';
+        let loadingInterval = null;
+        let statusTimeout = null;
+
+        // Web Audio API SFX Synthesizer State (Muted by default)
+        let sfxEnabled = false;
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSfx(type) {
+            if (!sfxEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(440, now + 0.045);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'tick') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1200 + Math.random() * 300, now);
+                    gain.gain.setValueAtTime(0.018, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.028);
+                } else if (type === 'success') {
+                    // Dual-tone high-tech chime
+                    [587.33, 880].forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.07, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.18);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.19);
+                    });
+                } else if (type === 'error') {
+                    // Low terminal error buzz
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.22);
+                    gain.gain.setValueAtTime(0.07, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                // Ignore audio context restrictions if blocked
+            }
+        }
+
+        function toggleSfx() {
+            sfxEnabled = !sfxEnabled;
+            const btn = document.getElementById('sfxToggleBtn');
+            if (sfxEnabled) {
+                btn.innerText = '[SFX: ON]';
+                btn.classList.add('active');
+                playSfx('click');
+                logToConsole('Audio SFX enabled.', 'INFO');
+            } else {
+                btn.innerText = '[SFX: OFF]';
+                btn.classList.remove('active');
+                logToConsole('Audio SFX muted.', 'INFO');
+            }
+        }
+
+        // 1. Matrix rain effect with initial synchronized wave and window resize support
         function matrixRain() {
+            var container = document.getElementById('matrixRainContainer');
             var c = document.createElement('canvas');
             var ctx = c.getContext('2d');
-            document.body.appendChild(c);
+            container.appendChild(c);
 
-            // Making the canvas full screen
+            // Making the canvas full screen on initial load
             c.height = window.innerHeight;
             c.width = window.innerWidth;
 
-            // Characters used for the matrix effect
-            var matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}';
-            matrixChars = matrixChars.split('');
-
             var font_size = 10;
-            var columns = c.width / font_size; // Number of columns for the rain
+            var columns = Math.floor(c.width / font_size);
             var drops = [];
-            for (var x = 0; x < columns; x++)
+            for (var x = 0; x < columns; x++) {
                 drops[x] = 1;
+            }
 
-            // Drawing the characters
+            function resizeMatrixCanvas() {
+                c.width = window.innerWidth;
+                c.height = window.innerHeight;
+                var newColumns = Math.floor(c.width / font_size);
+                for (var x = drops.length; x < newColumns; x++) {
+                    drops[x] = 1;
+                }
+                columns = newColumns;
+            }
+
+            window.addEventListener('resize', resizeMatrixCanvas);
+
+            var matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}'.split('');
+
             function draw() {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
                 ctx.fillRect(0, 0, c.width, c.height);
 
-                ctx.fillStyle = '#0F0'; // Green text
+                ctx.fillStyle = '#0F0';
                 ctx.font = font_size + 'px arial';
-                for (var i = 0; i < drops.length; i++) {
+                for (var i = 0; i < columns; i++) {
                     var text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
                     ctx.fillText(text, i * font_size, drops[i] * font_size);
 
-                    if (drops[i] * font_size > c.height && Math.random() > 0.975)
+                    if (drops[i] * font_size > c.height && Math.random() > 0.975) {
                         drops[i] = 0;
-
+                    }
                     drops[i]++;
                 }
             }
@@ -409,82 +989,710 @@
 
         matrixRain();
 
-        function typeText(element, text, speed = 100) {
-            let i = 0;
-            const typing = setInterval(() => {
-                if (i < text.length) {
-                    element.innerText += text.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(typing);
-                }
-            }, speed);
+        // Format current time as [HH:MM:SS]
+        function getFormattedTime() {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            return `[${hh}:${mm}:${ss}]`;
         }
 
-        // Encryption and decryption functions remain unchanged
-        function showLoading(text) {
+        // Color-Coded & Timestamped Console Logger
+        function logToConsole(text, level = 'INFO') {
+            const outputContainer = document.getElementById('outputContainer');
+            outputContainer.style.display = 'block';
+            const consoleOutput = document.getElementById('consoleOutput');
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'log-time';
+            timeSpan.innerText = getFormattedTime() + ' ';
+
+            const tagSpan = document.createElement('span');
+            const normalizedLevel = (level || 'INFO').toUpperCase();
+            if (normalizedLevel === 'ERR' || normalizedLevel === 'ERROR') {
+                tagSpan.className = 'log-err';
+                tagSpan.innerText = '[ERR] ';
+            } else if (normalizedLevel === 'WARN') {
+                tagSpan.className = 'log-warn';
+                tagSpan.innerText = '[WARN] ';
+            } else if (normalizedLevel === 'OK') {
+                tagSpan.className = 'log-ok';
+                tagSpan.innerText = '[OK] ';
+            } else {
+                tagSpan.className = 'log-info';
+                tagSpan.innerText = '[INFO] ';
+            }
+
+            const msgSpan = document.createElement('span');
+            if (normalizedLevel === 'ERR' || normalizedLevel === 'ERROR') {
+                msgSpan.className = 'log-err';
+            } else if (normalizedLevel === 'WARN') {
+                msgSpan.className = 'log-warn';
+            } else {
+                msgSpan.className = 'log-ok';
+            }
+            msgSpan.innerText = text;
+
+            entry.appendChild(timeSpan);
+            entry.appendChild(tagSpan);
+            entry.appendChild(msgSpan);
+            consoleOutput.appendChild(entry);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        function clearConsoleLog() {
+            playSfx('click');
+            const consoleOutput = document.getElementById('consoleOutput');
+            consoleOutput.innerHTML = '';
+        }
+
+        // Status notice helper (avoids blocking browser alert)
+        function showStatus(message, level = 'INFO') {
+            const banner = document.getElementById('statusBanner');
+            banner.innerText = message;
+            banner.style.display = 'block';
+            if (level === 'ERR') {
+                banner.style.borderColor = '#ff4444';
+                banner.style.color = '#ff4444';
+                banner.style.backgroundColor = 'rgba(255, 68, 68, 0.12)';
+            } else if (level === 'WARN') {
+                banner.style.borderColor = '#ffaa00';
+                banner.style.color = '#ffaa00';
+                banner.style.backgroundColor = 'rgba(255, 170, 0, 0.12)';
+            } else {
+                banner.style.borderColor = '#00ff00';
+                banner.style.color = '#00ff00';
+                banner.style.backgroundColor = 'rgba(0, 255, 0, 0.12)';
+            }
+            logToConsole(message, level);
+            if (statusTimeout) clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(() => {
+                banner.style.display = 'none';
+            }, 3500);
+        }
+
+        // Mode switcher between Single Mode and Bulk Mode
+        function switchMode(mode) {
+            playSfx('click');
+            const singleSection = document.getElementById('singleModeSection');
+            const bulkSection = document.getElementById('bulkModeSection');
+            const singleBtn = document.getElementById('singleModeBtn');
+            const bulkBtn = document.getElementById('bulkModeBtn');
+            const singleOutputWrapper = document.getElementById('singleOutputWrapper');
+
+            if (mode === 'bulk') {
+                singleSection.style.display = 'none';
+                bulkSection.style.display = 'block';
+                singleBtn.classList.remove('active');
+                bulkBtn.classList.add('active');
+                singleOutputWrapper.style.display = 'none';
+                logToConsole('Switched to Bulk Mode.', 'INFO');
+            } else {
+                singleSection.style.display = 'block';
+                bulkSection.style.display = 'none';
+                singleBtn.classList.add('active');
+                bulkBtn.classList.remove('active');
+                singleOutputWrapper.style.display = 'block';
+                logToConsole('Switched to Single Mode.', 'INFO');
+            }
+        }
+
+        // ASCII Progress Bar During the 2-Second Loading State (with status label embedded inside the bar)
+        function formatAsciiProgressBar(label, percent) {
+            const halfBlocks = 8;
+            const totalBlocks = halfBlocks * 2;
+            const filledTotal = Math.round((percent / 100) * totalBlocks);
+            const leftFilled = Math.min(halfBlocks, filledTotal);
+            const rightFilled = Math.max(0, filledTotal - halfBlocks);
+
+            const leftBar = '█'.repeat(leftFilled) + '░'.repeat(halfBlocks - leftFilled);
+            const rightBar = '█'.repeat(rightFilled) + '░'.repeat(halfBlocks - rightFilled);
+            const pctStr = String(percent).padStart(3, ' ') + '%';
+
+            return `[${leftBar} ${label} ${rightBar}] ${pctStr}`;
+        }
+
+        function showLoading(labelText, durationMs = 2000) {
+            if (loadingInterval) {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
             const loadingText = document.getElementById('loadingText');
-            loadingText.innerText = text;
             loadingText.style.display = 'block';
+
+            const startTime = Date.now();
+            loadingText.innerText = formatAsciiProgressBar(labelText, 0);
+
+            loadingInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const percent = Math.min(100, Math.floor((elapsed / durationMs) * 100));
+                loadingText.innerText = formatAsciiProgressBar(labelText, percent);
+                playSfx('tick');
+                if (percent >= 100) {
+                    clearInterval(loadingInterval);
+                    loadingInterval = null;
+                }
+            }, 80);
         }
 
         function hideLoading() {
+            if (loadingInterval) {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
             const loadingText = document.getElementById('loadingText');
             loadingText.style.display = 'none';
         }
 
-        function logToConsole(text) {
-            const consoleOutput = document.getElementById('consoleOutput');
-            consoleOutput.innerText += text + '\n';
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        // Dynamic Typing Speed for Long Texts (finishes within ~1.2-1.8s regardless of length)
+        function typeText(element, text) {
+            if (typingInterval) {
+                clearInterval(typingInterval);
+                typingInterval = null;
+            }
+            activeTypingElement = element;
+            activeTypingFullText = text;
+            element.innerText = '';
+
+            if (!text) return;
+
+            const len = text.length;
+            // Short strings type smoothly char-by-char; long payloads scale chunk & interval to finish in ~1.4s
+            let intervalMs = 25;
+            let chunkSize = 1;
+
+            if (len <= 35) {
+                intervalMs = 35;
+                chunkSize = 1;
+            } else if (len <= 90) {
+                intervalMs = 20;
+                chunkSize = 1;
+            } else {
+                intervalMs = 20;
+                chunkSize = Math.max(1, Math.ceil(len / 75));
+            }
+
+            let i = 0;
+            let tickCounter = 0;
+            typingInterval = setInterval(() => {
+                if (i < len) {
+                    element.innerText += text.slice(i, i + chunkSize);
+                    i += chunkSize;
+                    element.scrollTop = element.scrollHeight;
+                    tickCounter++;
+                    if (tickCounter % 3 === 0) {
+                        playSfx('tick');
+                    }
+                } else {
+                    clearInterval(typingInterval);
+                    typingInterval = null;
+                }
+            }, intervalMs);
         }
 
+        // Click on #outputText to immediately finish typing animation
+        function skipTypingAnimation() {
+            if (typingInterval && activeTypingElement) {
+                clearInterval(typingInterval);
+                typingInterval = null;
+                activeTypingElement.innerText = activeTypingFullText;
+                activeTypingElement.scrollTop = activeTypingElement.scrollHeight;
+                playSfx('click');
+            }
+        }
+
+        // Universal clipboard helper compatible with iframes and mobile browsers
+        function copyTextToClipboard(text, successMsg) {
+            if (!text) {
+                playSfx('error');
+                showStatus('Nothing to copy.', 'WARN');
+                return false;
+            }
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            tempTextArea.style.position = 'fixed';
+            tempTextArea.style.left = '-9999px';
+            tempTextArea.style.top = '0';
+            document.body.appendChild(tempTextArea);
+            tempTextArea.focus();
+            tempTextArea.select();
+
+            let copied = false;
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    copied = true;
+                    playSfx('click');
+                    showStatus(successMsg || 'Copied to clipboard.', 'OK');
+                } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        playSfx('click');
+                        showStatus(successMsg || 'Copied to clipboard.', 'OK');
+                    }).catch(() => {
+                        playSfx('error');
+                        showStatus('Failed to copy to clipboard.', 'ERR');
+                    });
+                    copied = true;
+                }
+            } catch (err) {
+                playSfx('error');
+                showStatus('Error copying to clipboard.', 'ERR');
+            }
+            document.body.removeChild(tempTextArea);
+            return copied;
+        }
+
+        // Copy Single Mode Output
+        function copySingleOutput() {
+            const textToCopy = currentSingleResult || document.getElementById('outputText').innerText;
+            copyTextToClipboard(textToCopy, 'Output copied to clipboard.');
+        }
+
+        // One-Click "Move Output to Input ↑" Button
+        function moveOutputToInput() {
+            skipTypingAnimation();
+            const outputVal = currentSingleResult || document.getElementById('outputText').innerText;
+            if (!outputVal || outputVal === 'Invalid decryption key or text') {
+                playSfx('error');
+                showStatus('No valid output available to move to input.', 'WARN');
+                return;
+            }
+            playSfx('click');
+            const inputEl = document.getElementById('inputText');
+            inputEl.value = outputVal;
+            inputEl.focus();
+            showStatus('Moved output text into input field.', 'OK');
+        }
+
+        // Single Mode Encryption (2000ms ASCII progress state)
         function encryptText() {
+            playSfx('click');
             const text = document.getElementById('inputText').value;
             const key = document.getElementById('key').value;
             if (text && key) {
                 const encryptedText = document.getElementById('outputText');
-                encryptedText.innerText = ''; // Clear existing text
-                showLoading('Encrypting...');
+                encryptedText.innerText = '';
+                showLoading('Encrypting...', 2000);
                 setTimeout(() => {
                     const encrypted = CryptoJS.AES.encrypt(text, key).toString();
+                    currentSingleResult = encrypted;
                     hideLoading();
-                    logToConsole('Encryption successful.');
-                    document.querySelector('.output-container').style.display = 'block';
+                    playSfx('success');
+                    document.getElementById('singleOutputWrapper').style.display = 'block';
+                    logToConsole('Encryption successful.', 'OK');
                     typeText(encryptedText, encrypted);
                 }, 2000);
             } else {
-                alert('Please enter both text and key');
+                playSfx('error');
+                showStatus('Please enter both text and encryption key.', 'WARN');
             }
         }
 
+        // Single Mode Decryption (2000ms ASCII progress state)
         function decryptText() {
+            playSfx('click');
             const encryptedText = document.getElementById('inputText').value;
             const key = document.getElementById('key').value;
             if (encryptedText && key) {
                 const decryptedText = document.getElementById('outputText');
-                decryptedText.innerText = ''; 
-                showLoading('Decrypting...');
+                decryptedText.innerText = '';
+                showLoading('Decrypting...', 2000);
                 setTimeout(() => {
                     try {
                         const decrypted = CryptoJS.AES.decrypt(encryptedText, key);
                         const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
                         hideLoading();
-                        logToConsole('Decryption successful.');
-                        document.querySelector('.output-container').style.display = 'block';
-                        typeText(decryptedText, plaintext ? plaintext : 'Invalid decryption key or text');
+                        document.getElementById('singleOutputWrapper').style.display = 'block';
+                        if (plaintext) {
+                            currentSingleResult = plaintext;
+                            playSfx('success');
+                            logToConsole('Decryption successful.', 'OK');
+                            typeText(decryptedText, plaintext);
+                        } else {
+                            currentSingleResult = '';
+                            playSfx('error');
+                            logToConsole('Decryption failed: Invalid key or corrupted ciphertext.', 'ERR');
+                            typeText(decryptedText, 'Invalid decryption key or text');
+                        }
                     } catch (e) {
+                        currentSingleResult = '';
                         hideLoading();
-                        logToConsole('Decryption failed: ' + e.message);
-                        document.querySelector('.output-container').style.display = 'block';
+                        playSfx('error');
+                        document.getElementById('singleOutputWrapper').style.display = 'block';
+                        logToConsole('Decryption failed: ' + e.message, 'ERR');
                         typeText(decryptedText, 'Invalid decryption key or text');
                     }
                 }, 2000);
-
             } else {
-                alert('Please enter both encrypted text and key');
+                playSfx('error');
+                showStatus('Please enter both encrypted text and key.', 'WARN');
             }
         }
+
+        // ================= BULK MODE FUNCTIONS =================
+
+        const CLIPBOARD_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        const CHECK_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+        function setRowBadge(badgeEl, status) {
+            badgeEl.className = 'row-badge';
+            const upper = (status || 'READY').toUpperCase();
+            badgeEl.innerText = upper;
+            if (upper === 'ENC') {
+                badgeEl.classList.add('badge-enc');
+            } else if (upper === 'DEC') {
+                badgeEl.classList.add('badge-dec');
+            } else if (upper === 'ERR') {
+                badgeEl.classList.add('badge-err');
+            } else {
+                badgeEl.classList.add('badge-ready');
+            }
+        }
+
+        function addBulkRow(noteVal = '', textVal = '', initialStatus = 'READY') {
+            const tbody = document.getElementById('bulkTableBody');
+            const tr = document.createElement('tr');
+
+            const tdNote = document.createElement('td');
+            const noteInput = document.createElement('input');
+            noteInput.type = 'text';
+            noteInput.className = 'bulk-note-input';
+            noteInput.placeholder = 'Note...';
+            noteInput.value = noteVal;
+            tdNote.appendChild(noteInput);
+
+            const tdText = document.createElement('td');
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.className = 'bulk-text-input';
+            textInput.placeholder = 'Text to encrypt/decrypt...';
+            textInput.value = textVal;
+            tdText.appendChild(textInput);
+
+            // Status Badge Column
+            const tdStatus = document.createElement('td');
+            tdStatus.style.textAlign = 'center';
+            const badge = document.createElement('span');
+            setRowBadge(badge, initialStatus);
+            tdStatus.appendChild(badge);
+
+            // Reset badge to READY when user edits row text
+            textInput.addEventListener('input', () => {
+                setRowBadge(badge, 'READY');
+            });
+
+            // Actions Column: Icon-only Copy Button + Remove Row Button
+            const tdAction = document.createElement('td');
+            const actionsWrap = document.createElement('div');
+            actionsWrap.className = 'row-actions';
+
+            const copyRowBtn = document.createElement('button');
+            copyRowBtn.type = 'button';
+            copyRowBtn.className = 'icon-row-btn';
+            copyRowBtn.title = 'Copy row';
+            copyRowBtn.innerHTML = CLIPBOARD_SVG;
+            copyRowBtn.onclick = function () {
+                const n = noteInput.value.trim();
+                const t = textInput.value.trim();
+                if (!n && !t) {
+                    playSfx('error');
+                    showStatus('Row is empty.', 'WARN');
+                    return;
+                }
+                const payload = n ? `${n} - ${t}` : t;
+                const ok = copyTextToClipboard(payload, 'Row copied to clipboard.');
+                if (ok) {
+                    copyRowBtn.innerHTML = CHECK_SVG;
+                    setTimeout(() => {
+                        copyRowBtn.innerHTML = CLIPBOARD_SVG;
+                    }, 1200);
+                }
+            };
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-row-btn';
+            removeBtn.innerText = '✕';
+            removeBtn.title = 'Remove row';
+            removeBtn.onclick = function () {
+                playSfx('click');
+                if (tbody.children.length > 1) {
+                    tbody.removeChild(tr);
+                } else {
+                    noteInput.value = '';
+                    textInput.value = '';
+                    setRowBadge(badge, 'READY');
+                }
+            };
+
+            actionsWrap.appendChild(copyRowBtn);
+            actionsWrap.appendChild(removeBtn);
+            tdAction.appendChild(actionsWrap);
+
+            tr.appendChild(tdNote);
+            tr.appendChild(tdText);
+            tr.appendChild(tdStatus);
+            tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+        }
+
+        function getBulkRowsData() {
+            const rows = document.querySelectorAll('#bulkTableBody tr');
+            const data = [];
+            rows.forEach((row) => {
+                const note = row.querySelector('.bulk-note-input').value.trim();
+                const text = row.querySelector('.bulk-text-input').value.trim();
+                const badge = row.querySelector('.row-badge');
+                if (note !== '' || text !== '') {
+                    data.push({ note, text, rowElement: row, badgeElement: badge });
+                }
+            });
+            return data;
+        }
+
+        // Parse pasted lines supporting both CSV (comma-separated) and TXT ('-' separated)
+        function parseBulkLines(rawString) {
+            const lines = rawString.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            const parsed = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                let note = '';
+                let text = '';
+
+                if (i === 0 && /^"?note"?\s*[,|-]\s*"?text/i.test(line)) {
+                    continue;
+                }
+
+                if (line.indexOf(' - ') !== -1) {
+                    const idx = line.indexOf(' - ');
+                    note = line.substring(0, idx).trim();
+                    text = line.substring(idx + 3).trim();
+                } else if (line.indexOf(',') !== -1) {
+                    const csvMatch = line.match(/^"((?:[^"]|"")*)"\s*,\s*(.*)$/);
+                    if (csvMatch) {
+                        note = csvMatch[1].replace(/""/g, '"').trim();
+                        text = csvMatch[2].trim();
+                    } else {
+                        const idx = line.indexOf(',');
+                        note = line.substring(0, idx).trim();
+                        text = line.substring(idx + 1).trim();
+                    }
+                    if (text.startsWith('"') && text.endsWith('"') && text.length >= 2) {
+                        text = text.substring(1, text.length - 1).replace(/""/g, '"');
+                    }
+                } else if (line.indexOf('-') !== -1) {
+                    const idx = line.indexOf('-');
+                    note = line.substring(0, idx).trim();
+                    text = line.substring(idx + 1).trim();
+                } else {
+                    note = 'Item ' + (parsed.length + 1);
+                    text = line;
+                }
+
+                parsed.push({ note, text });
+            }
+
+            return parsed;
+        }
+
+        function populateTableWithData(items) {
+            const tbody = document.getElementById('bulkTableBody');
+            tbody.innerHTML = '';
+            if (items.length === 0) {
+                addBulkRow('', '');
+                return;
+            }
+            items.forEach(item => {
+                addBulkRow(item.note, item.text, 'READY');
+            });
+        }
+
+        function togglePasteDrawer(show) {
+            playSfx('click');
+            const drawer = document.getElementById('pasteDrawer');
+            drawer.style.display = show ? 'block' : 'none';
+            if (show) {
+                document.getElementById('bulkPasteInput').focus();
+            }
+        }
+
+        async function triggerBulkPaste() {
+            playSfx('click');
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                try {
+                    const clipText = await navigator.clipboard.readText();
+                    if (clipText && clipText.trim()) {
+                        const items = parseBulkLines(clipText);
+                        if (items.length > 0) {
+                            populateTableWithData(items);
+                            showStatus('Pasted ' + items.length + ' row(s) from clipboard.', 'OK');
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    // Fallback to paste drawer when clipboard read permission is denied
+                }
+            }
+            togglePasteDrawer(true);
+        }
+
+        function applyPastedData() {
+            playSfx('click');
+            const raw = document.getElementById('bulkPasteInput').value;
+            if (!raw || !raw.trim()) {
+                playSfx('error');
+                showStatus('Please paste comma-separated or "-" separated text first.', 'WARN');
+                return;
+            }
+            const items = parseBulkLines(raw);
+            populateTableWithData(items);
+            document.getElementById('bulkPasteInput').value = '';
+            togglePasteDrawer(false);
+            playSfx('success');
+            showStatus('Loaded ' + items.length + ' row(s) into table.', 'OK');
+        }
+
+        // Bulk Encrypt / Decrypt using the single shared encryption key & 2-second ASCII progress bar
+        function bulkProcess(action) {
+            playSfx('click');
+            const key = document.getElementById('key').value;
+            if (!key) {
+                playSfx('error');
+                showStatus('Please enter the Encryption key first.', 'WARN');
+                return;
+            }
+
+            const rows = getBulkRowsData();
+            if (rows.length === 0) {
+                playSfx('error');
+                showStatus('Please enter or paste at least one row in the table.', 'WARN');
+                return;
+            }
+
+            showLoading(action === 'encrypt' ? 'Encrypting...' : 'Decrypting...', 2000);
+
+            setTimeout(() => {
+                let successCount = 0;
+                let failCount = 0;
+
+                rows.forEach(({ text, rowElement, badgeElement }) => {
+                    const textInput = rowElement.querySelector('.bulk-text-input');
+                    if (!text) return;
+
+                    if (action === 'encrypt') {
+                        const encrypted = CryptoJS.AES.encrypt(text, key).toString();
+                        textInput.value = encrypted;
+                        setRowBadge(badgeElement, 'ENC');
+                        successCount++;
+                    } else {
+                        try {
+                            const decrypted = CryptoJS.AES.decrypt(text, key);
+                            const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+                            if (plaintext) {
+                                textInput.value = plaintext;
+                                setRowBadge(badgeElement, 'DEC');
+                                successCount++;
+                            } else {
+                                setRowBadge(badgeElement, 'ERR');
+                                failCount++;
+                            }
+                        } catch (e) {
+                            setRowBadge(badgeElement, 'ERR');
+                            failCount++;
+                        }
+                    }
+                });
+
+                hideLoading();
+                if (action === 'encrypt') {
+                    playSfx('success');
+                    showStatus('Bulk encryption completed (' + successCount + ' row(s) encrypted).', 'OK');
+                } else {
+                    if (failCount === 0) {
+                        playSfx('success');
+                        showStatus('Bulk decryption completed (' + successCount + ' row(s) decrypted).', 'OK');
+                    } else {
+                        playSfx('error');
+                        showStatus('Decrypted ' + successCount + ' row(s), failed ' + failCount + ' row(s). Check key/text.', 'ERR');
+                    }
+                }
+            }, 2000);
+        }
+
+        // Bulk Copy ('-' separated)
+        function bulkCopyHyphen() {
+            const rows = getBulkRowsData();
+            if (rows.length === 0) {
+                playSfx('error');
+                showStatus('No table data to copy.', 'WARN');
+                return;
+            }
+            const formatted = rows.map(r => `${r.note} - ${r.text}`).join('\n');
+            copyTextToClipboard(formatted, 'Bulk data copied ("-" separated).');
+        }
+
+        // Reset Bulk Data
+        function resetBulkData() {
+            playSfx('click');
+            const tbody = document.getElementById('bulkTableBody');
+            tbody.innerHTML = '';
+            addBulkRow('', '');
+            addBulkRow('', '');
+            document.getElementById('bulkPasteInput').value = '';
+            togglePasteDrawer(false);
+            showStatus('Bulk table data has been reset.', 'INFO');
+        }
+
+        // Download .txt ('-' separated) or .csv
+        function downloadBulkFile(format) {
+            playSfx('click');
+            const rows = getBulkRowsData();
+            if (rows.length === 0) {
+                playSfx('error');
+                showStatus('No data in table to download.', 'WARN');
+                return;
+            }
+
+            let content = '';
+            let mimeType = 'text/plain;charset=utf-8;';
+            let filename = 'encrypted_data.txt';
+
+            if (format === 'txt') {
+                content = rows.map(r => `${r.note} - ${r.text}`).join('\r\n');
+                filename = 'cipher_data.txt';
+            } else if (format === 'csv') {
+                const escapeCsv = (val) => `"${String(val).replace(/"/g, '""')}"`;
+                const header = 'Note,Text';
+                const csvLines = rows.map(r => `${escapeCsv(r.note)},${escapeCsv(r.text)}`);
+                content = [header, ...csvLines].join('\r\n');
+                mimeType = 'text/csv;charset=utf-8;';
+                filename = 'cipher_data.csv';
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            playSfx('success');
+            showStatus('Downloaded ' + filename + ' successfully.', 'OK');
+        }
+
+        // Initialize Bulk Table with 2 empty rows on load
+        window.addEventListener('DOMContentLoaded', () => {
+            addBulkRow('', '');
+            addBulkRow('', '');
+        });
     </script>
 </body>
 </html>
