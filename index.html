@@ -255,22 +255,21 @@
             }
         }
 
-        /* ASCII Progress Bar Loading State */
+        /* Inline CLI Progress Bar Loading State (Raw Console Output) */
         .loading-text {
             display: none;
             color: #00ff00;
             margin: 12px auto;
-            padding: 8px 10px;
+            padding: 0;
             width: calc(100% - 20px);
-            background-color: #051005;
-            border: 1px solid rgba(0, 255, 0, 0.6);
-            border-radius: 4px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
             font-family: 'Inconsolata', Courier New, monospace;
             font-weight: bold;
             font-size: 15px;
             letter-spacing: 0.5px;
             text-shadow: 0 0 6px #00ff00;
-            box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.25);
             white-space: pre-wrap;
             word-break: break-all;
         }
@@ -560,38 +559,48 @@
             border: 1px solid rgba(0, 255, 0, 0.5);
         }
 
-        /* Row Status Badges */
-        .row-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 3px;
-            letter-spacing: 0.5px;
-            text-align: center;
-            min-width: 44px;
-            font-family: Courier New, Courier, monospace;
-        }
-
-        .badge-ready {
-            color: #7ee787;
-            border: 1px solid rgba(0, 255, 0, 0.45);
-            background-color: rgba(0, 255, 0, 0.08);
-        }
-
-        .badge-enc,
-        .badge-dec {
-            color: #000;
-            background-color: #00ff00;
+        /* Readonly Mini-Terminal Output in Bulk Table Cells */
+        .bulk-table .result.terminal.row-terminal {
+            margin: 0;
+            padding: 6px 10px;
+            width: 100%;
+            min-height: 32px;
+            max-height: 85px;
+            font-size: 14px;
+            line-height: 1.35;
+            background-color: #000;
+            color: #00ff00;
             border: 1px solid #00ff00;
-            box-shadow: 0 0 6px rgba(0, 255, 0, 0.8);
+            box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.65);
+            word-break: break-all;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            cursor: default;
         }
 
-        .badge-err {
+        /* Error Row Highlighting in Red */
+        .bulk-table tr.error-row td {
+            background-color: rgba(255, 40, 40, 0.12);
+            border-bottom-color: #ff4444;
+            border-right-color: rgba(255, 68, 68, 0.4);
+        }
+
+        .bulk-table tr.error-row input[type="text"] {
+            border-color: #ff4444;
+            color: #ff8888;
+            box-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+        }
+
+        .bulk-table tr.error-row .result.terminal.row-terminal {
+            border-color: #ff4444;
             color: #ff4444;
-            border: 1px solid #ff4444;
-            background-color: rgba(255, 68, 68, 0.15);
-            box-shadow: 0 0 6px rgba(255, 68, 68, 0.5);
+            text-shadow: 0 0 6px rgba(255, 68, 68, 0.7);
+            box-shadow: inset 0 0 10px rgba(255, 68, 68, 0.65);
+        }
+
+        .bulk-table tr.error-row .result.terminal.row-terminal:before {
+            background: linear-gradient(90deg, rgba(255, 68, 68, 0.12) 1px, transparent 1px);
+            background-size: 3px 3px;
         }
 
         /* Per-Row Action Buttons (SVG Copy + Remove) */
@@ -761,7 +770,8 @@
         <!-- BULK MODE SECTION -->
         <div id="bulkModeSection">
             <div class="bulk-controls-row">
-                <button type="button" onclick="addBulkRow('', '')">+ Add Row</button>
+                <button type="button" onclick="handleAddRowClick()">+ Add Row</button>
+                <button type="button" id="editInputsBtn" style="display: none;" onclick="restoreBulkInputs()">Edit Inputs</button>
                 <button type="button" onclick="triggerBulkPaste()">Paste CSV / TXT</button>
                 <button type="button" onclick="bulkCopyHyphen()">Bulk Copy (-)</button>
                 <button type="button" onclick="resetBulkData()">Reset</button>
@@ -772,7 +782,7 @@
                 <p>Paste comma-separated (.csv) or '-' separated (.txt) lines below:</p>
                 <textarea id="bulkPasteInput" placeholder="Note 1, Secret Text 1&#10;Note 2 - Secret Text 2"></textarea>
                 <div class="bulk-controls-row">
-                    <button type="button" onclick="applyPastedData()">Load into Table</button>
+                    <button type="button" onclick="applyPastedData()">Parse &amp; Paste</button>
                     <button type="button" onclick="togglePasteDrawer(false)">Close</button>
                 </div>
             </div>
@@ -783,9 +793,8 @@
                     <thead>
                         <tr>
                             <th style="width: 30%;">Note</th>
-                            <th style="width: 44%;">Text to be encrypted</th>
-                            <th style="width: 12%; text-align: center;">Status</th>
-                            <th style="width: 14%; text-align: center;">Actions</th>
+                            <th id="bulkTextHeader" style="width: 54%;">Input Text</th>
+                            <th style="width: 16%; text-align: center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="bulkTableBody">
@@ -807,12 +816,12 @@
             </div>
         </div>
 
-        <!-- Animated ASCII Progress Bar with Label Inside -->
+        <!-- Inline CLI Progress Bar -->
         <div class="loading-text" id="loadingText"></div>
 
         <div class="output-container" id="outputContainer">
             <div id="singleOutputWrapper">
-                <div class="result terminal" id="outputText" title="Click to skip typing animation" onclick="skipTypingAnimation()"></div>
+                <div class="result terminal" id="outputText"></div>
                 <div class="copy-btn-wrapper">
                     <button type="button" class="copy-single-btn" onclick="copySingleOutput()">Copy to Clipboard</button>
                     <button type="button" class="copy-single-btn" onclick="moveOutputToInput()">Move Output to Input ↑</button>
@@ -834,11 +843,9 @@
     <script>
         // State variables
         let currentSingleResult = '';
-        let typingInterval = null;
-        let activeTypingElement = null;
-        let activeTypingFullText = '';
         let loadingInterval = null;
         let statusTimeout = null;
+        let isBulkOutputMode = false;
 
         // Web Audio API SFX Synthesizer State (Muted by default)
         let sfxEnabled = false;
@@ -1040,8 +1047,14 @@
             entry.appendChild(timeSpan);
             entry.appendChild(tagSpan);
             entry.appendChild(msgSpan);
-            consoleOutput.appendChild(entry);
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+
+            // Prepend so newest logs appear at the top (reverse-chronological order)
+            if (consoleOutput.firstChild) {
+                consoleOutput.insertBefore(entry, consoleOutput.firstChild);
+            } else {
+                consoleOutput.appendChild(entry);
+            }
+            consoleOutput.scrollTop = 0;
         }
 
         function clearConsoleLog() {
@@ -1101,19 +1114,16 @@
             }
         }
 
-        // ASCII Progress Bar During the 2-Second Loading State (with status label embedded inside the bar)
+        // 4. Inline CLI Progress Bar (Standard CLI Style: Label [██████████░░░░░░░░░░] 50%)
         function formatAsciiProgressBar(label, percent) {
-            const halfBlocks = 8;
-            const totalBlocks = halfBlocks * 2;
-            const filledTotal = Math.round((percent / 100) * totalBlocks);
-            const leftFilled = Math.min(halfBlocks, filledTotal);
-            const rightFilled = Math.max(0, filledTotal - halfBlocks);
+            const totalBlocks = 20;
+            const filledCount = Math.floor((percent / 100) * totalBlocks);
+            const emptyCount = totalBlocks - filledCount;
 
-            const leftBar = '█'.repeat(leftFilled) + '░'.repeat(halfBlocks - leftFilled);
-            const rightBar = '█'.repeat(rightFilled) + '░'.repeat(halfBlocks - rightFilled);
-            const pctStr = String(percent).padStart(3, ' ') + '%';
+            const filledBar = '█'.repeat(filledCount);
+            const emptyBar = `<span style="opacity: 0.3;">${'░'.repeat(emptyCount)}</span>`;
 
-            return `[${leftBar} ${label} ${rightBar}] ${pctStr}`;
+            return `${label} [${filledBar}${emptyBar}] ${percent}%`;
         }
 
         function showLoading(labelText, durationMs = 2000) {
@@ -1125,12 +1135,12 @@
             loadingText.style.display = 'block';
 
             const startTime = Date.now();
-            loadingText.innerText = formatAsciiProgressBar(labelText, 0);
+            loadingText.innerHTML = formatAsciiProgressBar(labelText, 0);
 
             loadingInterval = setInterval(() => {
                 const elapsed = Date.now() - startTime;
                 const percent = Math.min(100, Math.floor((elapsed / durationMs) * 100));
-                loadingText.innerText = formatAsciiProgressBar(labelText, percent);
+                loadingText.innerHTML = formatAsciiProgressBar(labelText, percent);
                 playSfx('tick');
                 if (percent >= 100) {
                     clearInterval(loadingInterval);
@@ -1148,61 +1158,31 @@
             loadingText.style.display = 'none';
         }
 
-        // Dynamic Typing Speed for Long Texts (finishes within ~1.2-1.8s regardless of length)
-        function typeText(element, text) {
-            if (typingInterval) {
-                clearInterval(typingInterval);
-                typingInterval = null;
+        // 5. Original Fixed-Speed Typing Animation (1 char per 100ms, per-element interval)
+        function typeText(element, text, speed = 100) {
+            if (element._typingInterval) {
+                clearInterval(element._typingInterval);
+                element._typingInterval = null;
             }
-            activeTypingElement = element;
-            activeTypingFullText = text;
+            element.dataset.fullText = text || '';
             element.innerText = '';
 
             if (!text) return;
 
-            const len = text.length;
-            // Short strings type smoothly char-by-char; long payloads scale chunk & interval to finish in ~1.4s
-            let intervalMs = 25;
-            let chunkSize = 1;
-
-            if (len <= 35) {
-                intervalMs = 35;
-                chunkSize = 1;
-            } else if (len <= 90) {
-                intervalMs = 20;
-                chunkSize = 1;
-            } else {
-                intervalMs = 20;
-                chunkSize = Math.max(1, Math.ceil(len / 75));
-            }
-
             let i = 0;
-            let tickCounter = 0;
-            typingInterval = setInterval(() => {
-                if (i < len) {
-                    element.innerText += text.slice(i, i + chunkSize);
-                    i += chunkSize;
+            element._typingInterval = setInterval(() => {
+                if (i < text.length) {
+                    element.innerText += text.charAt(i);
+                    i++;
                     element.scrollTop = element.scrollHeight;
-                    tickCounter++;
-                    if (tickCounter % 3 === 0) {
+                    if (i % 2 === 0) {
                         playSfx('tick');
                     }
                 } else {
-                    clearInterval(typingInterval);
-                    typingInterval = null;
+                    clearInterval(element._typingInterval);
+                    element._typingInterval = null;
                 }
-            }, intervalMs);
-        }
-
-        // Click on #outputText to immediately finish typing animation
-        function skipTypingAnimation() {
-            if (typingInterval && activeTypingElement) {
-                clearInterval(typingInterval);
-                typingInterval = null;
-                activeTypingElement.innerText = activeTypingFullText;
-                activeTypingElement.scrollTop = activeTypingElement.scrollHeight;
-                playSfx('click');
-            }
+            }, speed);
         }
 
         // Universal clipboard helper compatible with iframes and mobile browsers
@@ -1248,14 +1228,15 @@
 
         // Copy Single Mode Output
         function copySingleOutput() {
-            const textToCopy = currentSingleResult || document.getElementById('outputText').innerText;
+            const outputEl = document.getElementById('outputText');
+            const textToCopy = outputEl.dataset.fullText || currentSingleResult || outputEl.innerText;
             copyTextToClipboard(textToCopy, 'Output copied to clipboard.');
         }
 
         // One-Click "Move Output to Input ↑" Button
         function moveOutputToInput() {
-            skipTypingAnimation();
-            const outputVal = currentSingleResult || document.getElementById('outputText').innerText;
+            const outputEl = document.getElementById('outputText');
+            const outputVal = outputEl.dataset.fullText || currentSingleResult || outputEl.innerText;
             if (!outputVal || outputVal === 'Invalid decryption key or text') {
                 playSfx('error');
                 showStatus('No valid output available to move to input.', 'WARN');
@@ -1268,14 +1249,19 @@
             showStatus('Moved output text into input field.', 'OK');
         }
 
-        // Single Mode Encryption (2000ms ASCII progress state)
+        // Single Mode Encryption (2000ms CLI progress state)
         function encryptText() {
             playSfx('click');
             const text = document.getElementById('inputText').value;
             const key = document.getElementById('key').value;
             if (text && key) {
                 const encryptedText = document.getElementById('outputText');
+                if (encryptedText._typingInterval) {
+                    clearInterval(encryptedText._typingInterval);
+                    encryptedText._typingInterval = null;
+                }
                 encryptedText.innerText = '';
+                encryptedText.dataset.fullText = '';
                 showLoading('Encrypting...', 2000);
                 setTimeout(() => {
                     const encrypted = CryptoJS.AES.encrypt(text, key).toString();
@@ -1284,7 +1270,7 @@
                     playSfx('success');
                     document.getElementById('singleOutputWrapper').style.display = 'block';
                     logToConsole('Encryption successful.', 'OK');
-                    typeText(encryptedText, encrypted);
+                    typeText(encryptedText, encrypted, 100);
                 }, 2000);
             } else {
                 playSfx('error');
@@ -1292,14 +1278,19 @@
             }
         }
 
-        // Single Mode Decryption (2000ms ASCII progress state)
+        // Single Mode Decryption (2000ms CLI progress state)
         function decryptText() {
             playSfx('click');
             const encryptedText = document.getElementById('inputText').value;
             const key = document.getElementById('key').value;
             if (encryptedText && key) {
                 const decryptedText = document.getElementById('outputText');
+                if (decryptedText._typingInterval) {
+                    clearInterval(decryptedText._typingInterval);
+                    decryptedText._typingInterval = null;
+                }
                 decryptedText.innerText = '';
+                decryptedText.dataset.fullText = '';
                 showLoading('Decrypting...', 2000);
                 setTimeout(() => {
                     try {
@@ -1311,12 +1302,12 @@
                             currentSingleResult = plaintext;
                             playSfx('success');
                             logToConsole('Decryption successful.', 'OK');
-                            typeText(decryptedText, plaintext);
+                            typeText(decryptedText, plaintext, 100);
                         } else {
                             currentSingleResult = '';
                             playSfx('error');
                             logToConsole('Decryption failed: Invalid key or corrupted ciphertext.', 'ERR');
-                            typeText(decryptedText, 'Invalid decryption key or text');
+                            typeText(decryptedText, 'Invalid decryption key or text', 100);
                         }
                     } catch (e) {
                         currentSingleResult = '';
@@ -1324,7 +1315,7 @@
                         playSfx('error');
                         document.getElementById('singleOutputWrapper').style.display = 'block';
                         logToConsole('Decryption failed: ' + e.message, 'ERR');
-                        typeText(decryptedText, 'Invalid decryption key or text');
+                        typeText(decryptedText, 'Invalid decryption key or text', 100);
                     }
                 }, 2000);
             } else {
@@ -1338,24 +1329,62 @@
         const CLIPBOARD_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         const CHECK_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
-        function setRowBadge(badgeEl, status) {
-            badgeEl.className = 'row-badge';
-            const upper = (status || 'READY').toUpperCase();
-            badgeEl.innerText = upper;
-            if (upper === 'ENC') {
-                badgeEl.classList.add('badge-enc');
-            } else if (upper === 'DEC') {
-                badgeEl.classList.add('badge-dec');
-            } else if (upper === 'ERR') {
-                badgeEl.classList.add('badge-err');
-            } else {
-                badgeEl.classList.add('badge-ready');
+        function setBulkHeaderMode(isOutput) {
+            isBulkOutputMode = isOutput;
+            const headerEl = document.getElementById('bulkTextHeader');
+            const editBtn = document.getElementById('editInputsBtn');
+            if (headerEl) {
+                headerEl.innerText = isOutput ? 'Output Text' : 'Input Text';
+            }
+            if (editBtn) {
+                editBtn.style.display = isOutput ? 'inline-block' : 'none';
             }
         }
 
-        function addBulkRow(noteVal = '', textVal = '', initialStatus = 'READY') {
+        function createBulkTextInput(tr, initialVal = '') {
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.className = 'bulk-text-input';
+            textInput.placeholder = 'Text to encrypt/decrypt...';
+            textInput.value = initialVal;
+            tr.dataset.currentText = initialVal;
+            textInput.addEventListener('input', () => {
+                tr.dataset.currentText = textInput.value;
+                tr.classList.remove('error-row');
+            });
+            return textInput;
+        }
+
+        function restoreBulkInputs() {
+            playSfx('click');
+            const rows = document.querySelectorAll('#bulkTableBody tr');
+            rows.forEach((tr) => {
+                tr.classList.remove('error-row');
+                const tdText = tr.querySelector('.bulk-text-cell');
+                const termEl = tdText.querySelector('.row-terminal');
+                if (termEl && termEl._typingInterval) {
+                    clearInterval(termEl._typingInterval);
+                    termEl._typingInterval = null;
+                }
+                const savedText = tr.dataset.currentText || '';
+                tdText.innerHTML = '';
+                tdText.appendChild(createBulkTextInput(tr, savedText));
+            });
+            setBulkHeaderMode(false);
+        }
+
+        function handleAddRowClick() {
+            playSfx('click');
+            if (isBulkOutputMode) {
+                restoreBulkInputs();
+            }
+            addBulkRow('', '');
+        }
+
+        function addBulkRow(noteVal = '', textVal = '') {
             const tbody = document.getElementById('bulkTableBody');
             const tr = document.createElement('tr');
+            tr.dataset.currentText = textVal;
 
             const tdNote = document.createElement('td');
             const noteInput = document.createElement('input');
@@ -1366,24 +1395,9 @@
             tdNote.appendChild(noteInput);
 
             const tdText = document.createElement('td');
-            const textInput = document.createElement('input');
-            textInput.type = 'text';
-            textInput.className = 'bulk-text-input';
-            textInput.placeholder = 'Text to encrypt/decrypt...';
-            textInput.value = textVal;
+            tdText.className = 'bulk-text-cell';
+            const textInput = createBulkTextInput(tr, textVal);
             tdText.appendChild(textInput);
-
-            // Status Badge Column
-            const tdStatus = document.createElement('td');
-            tdStatus.style.textAlign = 'center';
-            const badge = document.createElement('span');
-            setRowBadge(badge, initialStatus);
-            tdStatus.appendChild(badge);
-
-            // Reset badge to READY when user edits row text
-            textInput.addEventListener('input', () => {
-                setRowBadge(badge, 'READY');
-            });
 
             // Actions Column: Icon-only Copy Button + Remove Row Button
             const tdAction = document.createElement('td');
@@ -1393,18 +1407,26 @@
             const copyRowBtn = document.createElement('button');
             copyRowBtn.type = 'button';
             copyRowBtn.className = 'icon-row-btn';
-            copyRowBtn.title = 'Copy row';
+            copyRowBtn.title = 'Copy row text';
             copyRowBtn.innerHTML = CLIPBOARD_SVG;
             copyRowBtn.onclick = function () {
-                const n = noteInput.value.trim();
-                const t = textInput.value.trim();
-                if (!n && !t) {
+                const inputEl = tr.querySelector('.bulk-text-input');
+                const termEl = tr.querySelector('.row-terminal');
+                let rowText = '';
+                if (inputEl) {
+                    rowText = inputEl.value.trim();
+                } else if (termEl) {
+                    rowText = (termEl.dataset.fullText || tr.dataset.currentText || termEl.innerText || '').trim();
+                } else {
+                    rowText = (tr.dataset.currentText || '').trim();
+                }
+
+                if (!rowText) {
                     playSfx('error');
-                    showStatus('Row is empty.', 'WARN');
+                    showStatus('Row text is empty.', 'WARN');
                     return;
                 }
-                const payload = n ? `${n} - ${t}` : t;
-                const ok = copyTextToClipboard(payload, 'Row copied to clipboard.');
+                const ok = copyTextToClipboard(rowText, 'Row text copied to clipboard.');
                 if (ok) {
                     copyRowBtn.innerHTML = CHECK_SVG;
                     setTimeout(() => {
@@ -1420,12 +1442,20 @@
             removeBtn.title = 'Remove row';
             removeBtn.onclick = function () {
                 playSfx('click');
+                const termEl = tr.querySelector('.row-terminal');
+                if (termEl && termEl._typingInterval) {
+                    clearInterval(termEl._typingInterval);
+                    termEl._typingInterval = null;
+                }
                 if (tbody.children.length > 1) {
                     tbody.removeChild(tr);
                 } else {
                     noteInput.value = '';
-                    textInput.value = '';
-                    setRowBadge(badge, 'READY');
+                    tr.classList.remove('error-row');
+                    tr.dataset.currentText = '';
+                    tdText.innerHTML = '';
+                    tdText.appendChild(createBulkTextInput(tr, ''));
+                    setBulkHeaderMode(false);
                 }
             };
 
@@ -1435,7 +1465,6 @@
 
             tr.appendChild(tdNote);
             tr.appendChild(tdText);
-            tr.appendChild(tdStatus);
             tr.appendChild(tdAction);
             tbody.appendChild(tr);
         }
@@ -1445,10 +1474,10 @@
             const data = [];
             rows.forEach((row) => {
                 const note = row.querySelector('.bulk-note-input').value.trim();
-                const text = row.querySelector('.bulk-text-input').value.trim();
-                const badge = row.querySelector('.row-badge');
+                const inputEl = row.querySelector('.bulk-text-input');
+                const text = inputEl ? inputEl.value.trim() : (row.dataset.currentText || '').trim();
                 if (note !== '' || text !== '') {
-                    data.push({ note, text, rowElement: row, badgeElement: badge });
+                    data.push({ note, text, rowElement: row });
                 }
             });
             return data;
@@ -1503,12 +1532,13 @@
         function populateTableWithData(items) {
             const tbody = document.getElementById('bulkTableBody');
             tbody.innerHTML = '';
+            setBulkHeaderMode(false);
             if (items.length === 0) {
                 addBulkRow('', '');
                 return;
             }
             items.forEach(item => {
-                addBulkRow(item.note, item.text, 'READY');
+                addBulkRow(item.note, item.text);
             });
         }
 
@@ -1535,7 +1565,7 @@
                         }
                     }
                 } catch (err) {
-                    // Fallback to paste drawer when clipboard read permission is denied
+                    // Fallback to manual paste drawer when clipboard read permission is denied in iframe
                 }
             }
             togglePasteDrawer(true);
@@ -1546,18 +1576,21 @@
             const raw = document.getElementById('bulkPasteInput').value;
             if (!raw || !raw.trim()) {
                 playSfx('error');
-                showStatus('Please paste comma-separated or "-" separated text first.', 'WARN');
+                showStatus('Please paste CSV or "-" separated lines first.', 'WARN');
                 return;
             }
             const items = parseBulkLines(raw);
+            if (items.length === 0) {
+                playSfx('error');
+                showStatus('No valid lines found to parse.', 'WARN');
+                return;
+            }
             populateTableWithData(items);
-            document.getElementById('bulkPasteInput').value = '';
             togglePasteDrawer(false);
-            playSfx('success');
-            showStatus('Loaded ' + items.length + ' row(s) into table.', 'OK');
+            showStatus('Parsed and loaded ' + items.length + ' row(s) into table.', 'OK');
         }
 
-        // Bulk Encrypt / Decrypt using the single shared encryption key & 2-second ASCII progress bar
+        // Bulk Encrypt / Decrypt: Replaces Input Text with simultaneous Output Text terminals
         function bulkProcess(action) {
             playSfx('click');
             const key = document.getElementById('key').value;
@@ -1580,29 +1613,52 @@
                 let successCount = 0;
                 let failCount = 0;
 
-                rows.forEach(({ text, rowElement, badgeElement }) => {
-                    const textInput = rowElement.querySelector('.bulk-text-input');
-                    if (!text) return;
+                // Switch header from "Input Text" to "Output Text"
+                setBulkHeaderMode(true);
+
+                rows.forEach(({ text, rowElement }) => {
+                    const tdText = rowElement.querySelector('.bulk-text-cell');
+                    rowElement.classList.remove('error-row');
+
+                    const prevTerm = tdText.querySelector('.row-terminal');
+                    if (prevTerm && prevTerm._typingInterval) {
+                        clearInterval(prevTerm._typingInterval);
+                        prevTerm._typingInterval = null;
+                    }
+
+                    const terminalDiv = document.createElement('div');
+                    terminalDiv.className = 'result terminal row-terminal';
+                    tdText.innerHTML = '';
+                    tdText.appendChild(terminalDiv);
+
+                    if (!text) {
+                        rowElement.dataset.currentText = '';
+                        return;
+                    }
 
                     if (action === 'encrypt') {
                         const encrypted = CryptoJS.AES.encrypt(text, key).toString();
-                        textInput.value = encrypted;
-                        setRowBadge(badgeElement, 'ENC');
+                        rowElement.dataset.currentText = encrypted;
+                        typeText(terminalDiv, encrypted, 100);
                         successCount++;
                     } else {
                         try {
                             const decrypted = CryptoJS.AES.decrypt(text, key);
                             const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
                             if (plaintext) {
-                                textInput.value = plaintext;
-                                setRowBadge(badgeElement, 'DEC');
+                                rowElement.dataset.currentText = plaintext;
+                                typeText(terminalDiv, plaintext, 100);
                                 successCount++;
                             } else {
-                                setRowBadge(badgeElement, 'ERR');
+                                rowElement.classList.add('error-row');
+                                rowElement.dataset.currentText = text;
+                                typeText(terminalDiv, 'Invalid decryption key or text', 100);
                                 failCount++;
                             }
                         } catch (e) {
-                            setRowBadge(badgeElement, 'ERR');
+                            rowElement.classList.add('error-row');
+                            rowElement.dataset.currentText = text;
+                            typeText(terminalDiv, 'Invalid decryption key or text', 100);
                             failCount++;
                         }
                     }
@@ -1618,7 +1674,7 @@
                         showStatus('Bulk decryption completed (' + successCount + ' row(s) decrypted).', 'OK');
                     } else {
                         playSfx('error');
-                        showStatus('Decrypted ' + successCount + ' row(s), failed ' + failCount + ' row(s). Check key/text.', 'ERR');
+                        showStatus('Decrypted ' + successCount + ' row(s), failed ' + failCount + ' row(s). Check highlighted row(s).', 'ERR');
                     }
                 }
             }, 2000);
@@ -1640,7 +1696,14 @@
         function resetBulkData() {
             playSfx('click');
             const tbody = document.getElementById('bulkTableBody');
+            tbody.querySelectorAll('.row-terminal').forEach((termEl) => {
+                if (termEl._typingInterval) {
+                    clearInterval(termEl._typingInterval);
+                    termEl._typingInterval = null;
+                }
+            });
             tbody.innerHTML = '';
+            setBulkHeaderMode(false);
             addBulkRow('', '');
             addBulkRow('', '');
             document.getElementById('bulkPasteInput').value = '';
